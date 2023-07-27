@@ -38,18 +38,31 @@ st.title('PDF Reader')
 
 uploaded_files = st.file_uploader("Choose PDF files", type="pdf", accept_multiple_files=True)
 
-df = pd.DataFrame()
+df_info = pd.DataFrame()
+df_all_text = pd.DataFrame()
 
 for file in uploaded_files:
     text = read_pdf(file)
     info = extract_info(text)
     info_df = pd.DataFrame([info])  # Create a single-row DataFrame
-    df = pd.concat([df, info_df], ignore_index=True)
+    df_info = pd.concat([df_info, info_df], ignore_index=True)
 
-if not df.empty:
-    st.table(df)
+    # Add the raw text to the all_text dataframe
+    all_text_df = pd.DataFrame({'All Text': [text]})
+    df_all_text = pd.concat([df_all_text, all_text_df], ignore_index=True)
 
-    csv = df.to_csv(index=False)
+if not df_info.empty:
+    st.table(df_info)
+
+    # Download link for the table displayed
+    csv = df_info.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-    href = f'<a href="data:file/csv;base64,{b64}" download="extracted_info.csv">Download CSV File</a>'
+    href = f'<a href="data:file/csv;base64,{b64}" download="extracted_info.csv">Download Extracted Info CSV File</a>'
     st.markdown(href, unsafe_allow_html=True)
+
+if not df_all_text.empty:
+    # Creating CSV with all the text extracted from the PDFs
+    csv_all = df_all_text.to_csv(index=False)
+    b64_all = base64.b64encode(csv_all.encode()).decode()  
+    href_all = f'<a href="data:file/csv;base64,{b64_all}" download="all_text.csv">Download All Text CSV File</a>'
+    st.markdown(href_all, unsafe_allow_html=True)
