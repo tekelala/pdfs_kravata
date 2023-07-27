@@ -28,7 +28,6 @@ def extract_info(text):
     info_dict["Teléfono"] = match.group(1).strip() if match else "Not found"
     match = re.search(r"OBJETO SOCIAL\s*(.*?)\s*CAPITAL", text, re.IGNORECASE | re.DOTALL)
     objeto_social = match.group(1).strip() if match else "Not found"
-    # Remove unwanted text from "Objeto Social"
     unwanted_text_pattern = r"Página 2.*-{32}"
     objeto_social = re.sub(unwanted_text_pattern, "", objeto_social, flags=re.IGNORECASE | re.DOTALL)
     info_dict["Objeto Social"] = objeto_social
@@ -36,10 +35,19 @@ def extract_info(text):
 
 st.title('PDF Reader')
 
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+uploaded_files = st.file_uploader("Choose PDF files", type="pdf", accept_multiple_files=True)
 
-if uploaded_file is not None:
-    cert_exist = read_pdf(uploaded_file)
-    info = extract_info(cert_exist)
-    df = pd.DataFrame(info, index=[0])
+df = pd.DataFrame()
+
+for file in uploaded_files:
+    text = read_pdf(file)
+    info = extract_info(text)
+    df = df.append(info, ignore_index=True)
+
+if not df.empty:
     st.table(df)
+
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+    href = f'<a href="data:file/csv;base64,{b64}" download="extracted_info.csv">Download CSV File</a>'
+    st.markdown(href, unsafe_allow_html=True)
