@@ -2,6 +2,7 @@ import streamlit as st
 from PyPDF2 import PdfReader
 import re
 import pandas as pd
+import base64
 
 def read_pdf(file):
     pdf = PdfReader(file)
@@ -42,7 +43,8 @@ df = pd.DataFrame()
 for file in uploaded_files:
     text = read_pdf(file)
     info = extract_info(text)
-    df = df.append(info, ignore_index=True)
+    info_df = pd.DataFrame([info])  # Create a single-row DataFrame
+    df = pd.concat([df, info_df], ignore_index=True)
 
 if not df.empty:
     st.table(df)
