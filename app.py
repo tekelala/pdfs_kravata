@@ -1,14 +1,18 @@
 import streamlit as st
-import PyPDF2
-import io
+from PyPDF2 import PdfReader
+import re
 
 def read_pdf(file):
-    pdf = PyPDF2.PdfFileReader(file)
+    pdf = PdfReader(file)
     text = ''
-    for page_num in range(pdf.getNumPages()):
-        page = pdf.getPage(page_num)
+    for page in pdf.pages:
         text += page.extract_text()
     return text
+
+def extract_razon_social(text):
+    match = re.search(r"Razón social:\s*(.*?)\s*Nit", text, re.IGNORECASE)
+    razon_social = match.group(1).strip() if match else "Not found"
+    return razon_social
 
 st.title('PDF Reader')
 
@@ -16,4 +20,5 @@ uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file is not None:
     text = read_pdf(uploaded_file)
-    st.write(text)
+    razon_social = extract_razon_social(text)
+    st.write(razon_social)
