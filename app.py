@@ -1,6 +1,7 @@
 import streamlit as st
 from PyPDF2 import PdfReader
 import re
+import pandas as pd
 
 def read_pdf(file):
     pdf = PdfReader(file)
@@ -9,16 +10,36 @@ def read_pdf(file):
         text += page.extract_text()
     return text
 
-def extract_razon_social(text):
+def extract_info(text):
+    info_dict = {}
     match = re.search(r"Razón social:\s*(.*?)\s*Nit", text, re.IGNORECASE)
-    razon_social = match.group(1).strip() if match else "Not found"
-    return razon_social
+    info_dict["Razón Social"] = match.group(1).strip() if match else "Not found"
+    match = re.search(r"Nit:\s*(.*?)\s*Administración", text, re.IGNORECASE)
+    info_dict["Nit"] = match.group(1).strip() if match else "Not found"
+    match = re.search(r"Matrícula No.\s*(.*?)\s*Fecha de matrícula:", text, re.IGNORECASE)
+    info_dict["Num Matricula"] = match.group(1).strip() if match else "Not found"
+    match = re.search(r"Dirección del domicilio principal:\s*(.*?)\s*Municipio:", text, re.IGNORECASE)
+    info_dict["Dirección"] = match.group(1).strip() if match else "Not found"
+    match = re.search(r"Municipio:\s*(.*?)\s*Correo electrónico:", text, re.IGNORECASE)
+    info_dict["Municipio"] = match.group(1).strip() if match else "Not found"
+    match = re.search(r"Correo electrónico:\s*(.*?)\s*Teléfono comercial 1:", text, re.IGNORECASE)
+    info_dict["Email"] = match.group(1).strip() if match else "Not found"
+    match = re.search(r"Teléfono comercial 1:\s*(.*?)\s*Teléfono comercial 2:", text, re.IGNORECASE)
+    info_dict["Teléfono"] = match.group(1).strip() if match else "Not found"
+    match = re.search(r"OBJETO SOCIAL\s*(.*?)\s*CAPITAL", text, re.IGNORECASE | re.DOTALL)
+    objeto_social = match.group(1).strip() if match else "Not found"
+    # Remove unwanted text from "Objeto Social"
+    unwanted_text_pattern = r"Página 2.*-{32}"
+    objeto_social = re.sub(unwanted_text_pattern, "", objeto_social, flags=re.IGNORECASE | re.DOTALL)
+    info_dict["Objeto Social"] = objeto_social
+    return info_dict
 
 st.title('PDF Reader')
 
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file is not None:
-    text = read_pdf(uploaded_file)
-    razon_social = extract_razon_social(text)
-    st.write(razon_social)
+    cert_exist = read_pdf(uploaded_file)
+    info = extract_info(cert_exist)
+    df = pd.DataFrame(info, index=[0])
+    st.table(df)
