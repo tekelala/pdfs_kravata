@@ -59,8 +59,10 @@ if not df.empty:
     from openpyxl.styles import Font, NamedStyle
 
     # Set the default font of the workbook
-    normal_style = NamedStyle(name="Normal", font=Font(name='Calibri', size=11))
-    wb.add_named_style(normal_style)
+    if "Normal" not in wb.named_styles:
+        normal_style = NamedStyle(name="Normal", font=Font(name='Calibri', size=11))
+        wb.add_named_style(normal_style)
+
 
 
     # Convert the DataFrame to rows and add them to the worksheet
