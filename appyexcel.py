@@ -62,3 +62,4 @@ if not df.empty:
 
     # Delete the temporary .xlsx file
     os.remove('extracted_info.xlsx')
+    
